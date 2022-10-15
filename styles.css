@@ -1,0 +1,32 @@
+@font-face {
+    font-family: Silkscreen;
+    src: url(fonts/Silkscreen/Silkscreen-Bold.ttf);
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #fff;
+}
+
+canvas {
+    display: block;
+    margin: 0 auto;
+    border-style: solid;
+    border-width: 8px;
+    border-color: #fff;
+}
+
+.title {
+    font-family: Silkscreen;
+    font-size: 24px;
+    text-align: center;
+    color: lightskyblue;
+}
+
+.subtitle {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    text-align: center;
+    color: rgb(197, 197, 33);
+}
