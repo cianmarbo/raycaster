@@ -30,3 +30,14 @@ canvas {
     text-align: center;
     color: rgb(197, 197, 33);
 }
+
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: hotpink;
+  color: white;
+  font-family: Arial, Hel;
+  text-align: center;
+}
