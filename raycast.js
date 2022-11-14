@@ -208,4 +208,3 @@ function draw() {
         ray.render();
     }
 }
-
