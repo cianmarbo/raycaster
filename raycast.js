@@ -12,8 +12,6 @@ const NUM_RAYS = WINDOW_WIDTH / WALL_STRIP_WIDTH;
 
 const RAYLINE_LENGTH = 30;
 
-let DEBUG_MODE = false;
-
 class Map {
     constructor() {
         this.grid = [
@@ -100,24 +98,23 @@ class Player {
         noStroke();
         fill("red");
         circle(this.x, this.y, this.radius);
-        stroke("red");
 
-        if(DEBUG_MODE) {
-            line(this.x,
-                this.y, 
-                this.x + Math.cos(this.rotationAngle) * RAYLINE_LENGTH, //when 92 degrees = 398.953 //when 90 degrees = 400
-                this.y + Math.sin(this.rotationAngle) * RAYLINE_LENGTH //when 92 degrees = 329.981 //when 90 degrees = 330
-           );
+        // // stroke("#0834f0");
+        // // line(
+        // //     this.x,
+        // //     this.y, 
+        // //     this.x + Math.cos(this.rotationAngle) * RAYLINE_LENGTH, //when 92 degrees = 398.953 //when 90 degrees = 400
+        // //     this.y + Math.sin(this.rotationAngle) * RAYLINE_LENGTH //when 92 degrees = 329.981 //when 90 degrees = 330
+        // //     );
    
-           noFill();
-           circle(this.x, this.y, 30);
-        }
+        // noFill();
+        // circle(this.x, this.y, 30);
     }
 }
 
 class Ray {
     constructor(rayAngle) {
-        this.rayAngle = rayAngle;
+        this.rayAngle = normalizeAngle(rayAngle);
     }
     render() {
         stroke("rgba(255, 0, 0, 0.2)");
@@ -178,6 +175,23 @@ function castAllRays() {
 
         columnId++;
     }
+}
+
+function normalizeAngle(angle) {
+
+    //angle will overflow and start at 0 again once over 360 degress (2 pi radians)
+    angle = angle % (2 * Math.PI);
+    
+    /*if angle is -1 degrees, make it 359 degress by forcing angle 
+    to 360 degrees and "adding" minus angle, resulting in a 
+    subtraction by 1 to 359 degrees
+    */
+
+    if(angle < 0) {
+        angle = (2 * Math.PI) + angle;
+    }
+
+    return angle;
 }
 
 function setup() {
