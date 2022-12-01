@@ -20,6 +20,10 @@ bool setup() {
     return true;
 }
 
+void draw_point(int pos_x, int pos_y) {
+    buffer[(WIN_WIDTH * pos_y) + pos_x] = 0xcafebb;
+}
+
 void rect(int pos_x, int pos_y, int width, int height) {
     for(int y = pos_y; y < (pos_y + height); y++) {
         for(int x = pos_x; x < (pos_x + width); x++) {
