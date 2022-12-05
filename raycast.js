@@ -1,4 +1,4 @@
-const TILE_SIZE = 32;
+const TILE_SIZE = 48;
 const MAP_NUM_ROWS = 11;
 const MAP_NUM_COLS = 15;
 
@@ -7,7 +7,7 @@ const WINDOW_HEIGHT = TILE_SIZE * MAP_NUM_ROWS;
 
 const FOV_ANGLE = 60 * (Math.PI / 180); //field of view angle
 
-const WALL_STRIP_WIDTH = 100; // thicker walls
+const WALL_STRIP_WIDTH = 4; // thicker walls
 const NUM_RAYS = WINDOW_WIDTH / WALL_STRIP_WIDTH;
 
 const RAYLINE_LENGTH = 30;
@@ -104,7 +104,7 @@ class Player {
         //     this.xpos,
         //     this.ypos, 
         //     this.xpos + Math.cos(this.rotationAngle) * RAYLINE_LENGTH, //when 92 degrees = 398.953 //when 90 degrees = 400
-        //     this.ypos+ Math.sin(this.rotationAngle) * RAYLINE_LENGTH //when 92 degrees = 329.981 //when 90 degrees = 330
+        //     this.ypos + Math.sin(this.rotationAngle) * RAYLINE_LENGTH //when 92 degrees = 329.981 //when 90 degrees = 330
         //     );
    
         // noFill();
@@ -132,12 +132,19 @@ class Ray {
         this.isRayFacingLeft = !this.isRayFacingRight;
     }
     cast(columnId) {
+
+        // Note: the technical name of the following algorithm is a DDA or "Digital Differential Analyzer"
+
         var xintercept, yintercept;
         var xstep, ystep;
 
         /////////////////////////////////////////////////
         // HORIZONTAL RAY-GRID INTERSECTION CODE
         ////////////////////////////////////////////////
+
+        var foundHorizontalWallHit = false;
+        var wallHitX = 0;
+        var wallHitY = 0;
 
         console.log("isRayFacingRight?", this.isRayFacingRight);
 
@@ -158,7 +165,7 @@ class Ray {
         // Calculate the increment for xstep and ystep
         ystep = TILE_SIZE;
 
-        //if ray is facing up, subtract 32 from ystep, if facing down, add 32
+        //if ray is facing up, subtract 32 for each increment of ystep, if facing down, add 32 for each increment
         ystep *= this.isRayFacingUp ? -1 : 1;
 
         xstep = TILE_SIZE / Math.tan(this.rayAngle);
@@ -168,6 +175,49 @@ class Ray {
 
         //if result of xstep is negative, but angle is right, set xstep to be positive
         xstep *= (this.isRayFacingRight && xstep <  0) ? -1 : 1;
+
+
+        // Set up some variables to track intersections with wall
+        // We are initializing these to the first intersection (our x and y intercepts)
+
+        var nextHorizontalTouchX = xintercept;
+        var nextHorizontalTouchY = yintercept;
+
+        // Currently our intersections will rest on the literal line between each tile, if that makes sense
+        // But, we want to check if a tile is a wall, so in order to do this, if our ray is facing up
+        // we have to subtract 1 pixel (so we're inside the tile), and if our ray is facing down, we add one pixel
+
+        if(this.isRayFacingUp) {
+            nextHorizontalTouchY--;
+        }
+
+        //Increment xstep and ystep until we find a wall
+
+        while(nextHorizontalTouchX >= 0 && nextHorizontalTouchX <= WINDOW_WIDTH && nextHorizontalTouchY >=0 && nextHorizontalTouchY <= WINDOW_HEIGHT) {
+            if(grid.checkCollision(nextHorizontalTouchX, nextHorizontalTouchY)) {
+
+                // WE FOUND A WALL HIT
+                foundHorizontalWallHit = true;
+                // Save co-ordinates of wall hit
+                wallHitX = nextHorizontalTouchX;
+                wallHitY = nextHorizontalTouchY;
+
+                console.log(wallHitX, wallHitY);
+
+                stroke("red");
+                line(player.xpos, player.ypos, wallHitX, wallHitY);
+
+                break;
+            } else {
+                //if no wall was found, continue to increment intersections
+                nextHorizontalTouchX += xstep;
+                nextHorizontalTouchY += ystep;
+            }
+        }
+
+        /////////////////////////////////////////////////
+        // VERTICAL RAY-GRID INTERSECTION CODE
+        ////////////////////////////////////////////////
 
 
     }
@@ -221,13 +271,12 @@ function castAllRays() {
 
     rays = []; //initialize ray array 
 
-    for(var i = 0; i < 1; i++) {
+    for(var i = 0; i < NUM_RAYS; i++) {
 
         //console.log(columnId);
 
         var ray = new Ray(rayAngle);
         ray.cast(columnId);
-        
         rays.push(ray);
 
         //what will go into FOV_ANGLE (60 degrees) NUM_RAYS (5) times
@@ -267,7 +316,7 @@ function update() {
     // TODO: update all game objects before we render the next frame
 
     player.update();
-    castAllRays();
+    // castAllRays();
 }
 
 function draw() {
@@ -277,9 +326,11 @@ function draw() {
     update();
 
     grid.render();
-    player.render();
     
     for(ray of rays) {
         ray.render();
     }
+
+    player.render();
+    castAllRays();
 }
