@@ -1,4 +1,4 @@
-const TILE_SIZE = 48;
+const TILE_SIZE = 32;
 const MAP_NUM_ROWS = 11;
 const MAP_NUM_COLS = 15;
 
@@ -143,8 +143,8 @@ class Ray {
         ////////////////////////////////////////////////
 
         var foundHorizontalWallHit = false;
-        var wallHitX = 0;
-        var wallHitY = 0;
+        var horizontalWallHitX = 0;
+        var horizontalWallHitY = 0;
 
         console.log("isRayFacingRight?", this.isRayFacingRight);
 
@@ -199,13 +199,13 @@ class Ray {
                 // WE FOUND A WALL HIT
                 foundHorizontalWallHit = true;
                 // Save co-ordinates of wall hit
-                wallHitX = nextHorizontalTouchX;
-                wallHitY = nextHorizontalTouchY;
+                horizontalWallHitX = nextHorizontalTouchX;
+                horizontalWallHitY = nextHorizontalTouchY;
 
-                console.log(wallHitX, wallHitY);
+                console.log(horizontalWallHitX, horizontalWallHitY);
 
                 stroke("red");
-                line(player.xpos, player.ypos, wallHitX, wallHitY);
+                line(player.xpos, player.ypos, horizontalWallHitX, horizontalWallHitY);
 
                 break;
             } else {
@@ -218,6 +218,20 @@ class Ray {
         /////////////////////////////////////////////////
         // VERTICAL RAY-GRID INTERSECTION CODE
         ////////////////////////////////////////////////
+
+        var foundVerticalWallHit = false;
+        var verticalWallHitX = 0;
+        var verticalWallHitY = 0;
+
+        // Find x-cord of closest vertical grid intersection
+        xintercept = Math.floor(player.posx / TILE_SIZE) * TILE_SIZE;
+
+        //// Check if angle is facing right, if so add TILE_SIZE (32) to original yintercept, else add nothing (0)
+        xintercept += isRayFacingRight ? TILE_SIZE : 0;
+
+        // Find y-cord of closest vertical grid intersection
+
+        yintercept = player.ypos + (xintercept - player.xpos) * Math.tan(rayAngle);
 
 
     }
