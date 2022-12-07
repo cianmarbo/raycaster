@@ -1,4 +1,4 @@
-const TILE_SIZE = 32;
+const TILE_SIZE = 48;
 const MAP_NUM_ROWS = 11;
 const MAP_NUM_COLS = 15;
 
@@ -116,12 +116,15 @@ class Ray {
     constructor(rayAngle) {
         this.rayAngle = normalizeAngle(rayAngle);
         
-        //keep track of x, y position which intersected with a wall
+        //keep track of closest x, y position which intersected with a wall
         this.wallHitX = 0;
         this.wallHitY = 0;
 
-        //distance between player and wall intersection
+        //distance between player and closest wall ntersection
         this.distance = 0;
+
+        //was the wall hit vertical or horizontal?
+        this.wasHitVertical = false;
 
         //ray is facing down if angle is greater than 0 degrees and less than 180 degrees
         this.isRayFacingDown = this.rayAngle > 0 && this.rayAngle < Math.PI;
@@ -160,6 +163,7 @@ class Ray {
         // Find x-cord of closest horizontal grid intersection
         // xintercept = player.xpos + ((player.ypos - yintercept) / Math.tan(rayAngle));
 
+        //current player xpos + length of the adjacent side of the triangle 
         xintercept = player.xpos + ((yintercept - player.ypos) / Math.tan(this.rayAngle));
 
         // Calculate the increment for xstep and ystep
@@ -202,11 +206,6 @@ class Ray {
                 horizontalWallHitX = nextHorizontalTouchX;
                 horizontalWallHitY = nextHorizontalTouchY;
 
-                console.log(horizontalWallHitX, horizontalWallHitY);
-
-                stroke("red");
-                line(player.xpos, player.ypos, horizontalWallHitX, horizontalWallHitY);
-
                 break;
             } else {
                 //if no wall was found, continue to increment intersections
@@ -224,24 +223,70 @@ class Ray {
         var verticalWallHitY = 0;
 
         // Find x-cord of closest vertical grid intersection
-        xintercept = Math.floor(player.posx / TILE_SIZE) * TILE_SIZE;
+        xintercept = Math.floor(player.xpos / TILE_SIZE) * TILE_SIZE;
 
         //// Check if angle is facing right, if so add TILE_SIZE (32) to original yintercept, else add nothing (0)
-        xintercept += isRayFacingRight ? TILE_SIZE : 0;
+        xintercept += this.isRayFacingRight ? TILE_SIZE : 0;
 
         // Find y-cord of closest vertical grid intersection
+        yintercept = player.ypos + (xintercept - player.xpos) * Math.tan(this.rayAngle);
 
-        yintercept = player.ypos + (xintercept - player.xpos) * Math.tan(rayAngle);
+        xstep = TILE_SIZE;
 
+        //set xstep to positive 32 if the ray is facing right, and negative 32 if the ray is facing left
+        xstep *= this.isRayFacingRight ? 1 : -1;
+
+        ystep = TILE_SIZE * Math.tan(this.rayAngle);
+
+        //if result of ystep is positive, but angle is up, set ystep to be negative
+        ystep *= (this.isRayFacingUp && ystep > 0) ? -1 : 1;
+
+        //if result of ystep is negative, but angle is down set ystep to be positive
+        ystep *= (this.isRayFacingDown && ystep <  0) ? -1 : 1;
+
+        var nextVerticalTouchX = xintercept;
+        var nextVerticalTouchY = yintercept;
+
+        if(this.isRayFacingLeft) {
+            nextVerticalTouchX--;
+        }
+
+        while(nextVerticalTouchX >= 0 && nextVerticalTouchX <= WINDOW_WIDTH && nextVerticalTouchY >= 0 && nextVerticalTouchY <= WINDOW_HEIGHT) {
+            if(grid.checkCollision(nextVerticalTouchX, nextVerticalTouchY)) {
+
+                foundVerticalWallHit = true;
+                verticalWallHitX = nextVerticalTouchX;
+                verticalWallHitY = nextVerticalTouchY;
+
+                break;
+            } else {
+                nextVerticalTouchX += xstep;
+                nextVerticalTouchY += ystep;
+            }
+        }
+
+        // get distances of vertical and horizontal intersections with wall
+
+        var horizontalHitDistance = (foundHorizontalWallHit) ? distanceBetweenPoints(player.xpos, player.ypos, horizontalWallHitX, horizontalWallHitY) : Number.MAX_VALUE;
+        var verticalHitDistance = (foundVerticalWallHit) ? distanceBetweenPoints(player.xpos, player.ypos, verticalWallHitX, verticalWallHitY) : Number.MAX_VALUE;
+
+        // depending on which distance is smaller, assign it to wallHitX
+        // only store smallest of the distances
+        this.wallHitX = (horizontalHitDistance < verticalHitDistance) ? horizontalWallHitX : verticalWallHitX;
+        this.wallHitY = (horizontalHitDistance < verticalHitDistance) ? horizontalWallHitY : verticalWallHitY;
+        this.distance = (horizontalHitDistance < verticalHitDistance) ? horizontalHitDistance : verticalHitDistance;
+
+        //hit was vertical only if vertical distance was less than horizontal distance
+        this.wasHitVertical = (verticalHitDistance < horizontalHitDistance);
 
     }
     render() {
-        stroke("rgba(255, 0, 0, 0.2)");
+        stroke("rgba(255, 0, 0, 0.8)");
         line(
             player.xpos,
             player.ypos,
-            player.xpos + Math.cos(this.rayAngle) * RAYLINE_LENGTH,
-            player.ypos + Math.sin(this.rayAngle) * RAYLINE_LENGTH
+            this.wallHitX,
+            this.wallHitY
         );
     }
 }
@@ -265,7 +310,7 @@ function keyPressed() {
 }
 
 function keyReleased() {
-    //keyReleased() is called from p5.js
+    // keyReleased() is called from p5.js
     if(keyCode == UP_ARROW) {
         player.walkDirection = 0;
     } else if (keyCode == DOWN_ARROW) {
@@ -287,9 +332,8 @@ function castAllRays() {
 
     for(var i = 0; i < NUM_RAYS; i++) {
 
-        //console.log(columnId);
-
         var ray = new Ray(rayAngle);
+
         ray.cast(columnId);
         rays.push(ray);
 
@@ -318,8 +362,12 @@ function normalizeAngle(angle) {
     return angle;
 }
 
+// find the distnace between player and horizontal/vertical intersection with walls
+function distanceBetweenPoints(x1, y1, x2, y2) {
+    return Math.sqrt( ((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)) );
+}
+
 function setup() {
-    // TODO: initialize all objects
     // setup() is called from p5.js
 
     //createCanvas is a p5.js function that draws a canvas
@@ -327,14 +375,12 @@ function setup() {
 }
 
 function update() {
-    // TODO: update all game objects before we render the next frame
 
     player.update();
-    // castAllRays();
+    castAllRays();
 }
 
 function draw() {
-    // TODO: render all objects frame by frame
     // draw() is called from p5.js
 
     update();
@@ -346,5 +392,4 @@ function draw() {
     }
 
     player.render();
-    castAllRays();
 }
