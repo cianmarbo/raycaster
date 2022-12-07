@@ -7,7 +7,7 @@ const WINDOW_HEIGHT = TILE_SIZE * MAP_NUM_ROWS;
 
 const FOV_ANGLE = 60 * (Math.PI / 180); //field of view angle
 
-const WALL_STRIP_WIDTH = 4; // thicker walls
+const WALL_STRIP_WIDTH = 2; // thicker walls
 const NUM_RAYS = WINDOW_WIDTH / WALL_STRIP_WIDTH;
 
 const RAYLINE_LENGTH = 30;
@@ -191,14 +191,14 @@ class Ray {
         // But, we want to check if a tile is a wall, so in order to do this, if our ray is facing up
         // we have to subtract 1 pixel (so we're inside the tile), and if our ray is facing down, we add one pixel
 
-        if(this.isRayFacingUp) {
-            nextHorizontalTouchY--;
-        }
+        // if(this.isRayFacingUp) {
+        //     nextHorizontalTouchY--;
+        // }
 
         //Increment xstep and ystep until we find a wall
 
         while(nextHorizontalTouchX >= 0 && nextHorizontalTouchX <= WINDOW_WIDTH && nextHorizontalTouchY >=0 && nextHorizontalTouchY <= WINDOW_HEIGHT) {
-            if(grid.checkCollision(nextHorizontalTouchX, nextHorizontalTouchY)) {
+            if(grid.checkCollision(nextHorizontalTouchX, nextHorizontalTouchY - (this.isRayFacingUp ? 1 : 0))) {
 
                 // WE FOUND A WALL HIT
                 foundHorizontalWallHit = true;
@@ -247,12 +247,12 @@ class Ray {
         var nextVerticalTouchX = xintercept;
         var nextVerticalTouchY = yintercept;
 
-        if(this.isRayFacingLeft) {
-            nextVerticalTouchX--;
-        }
+        // if(this.isRayFacingLeft) {
+        //     nextVerticalTouchX--;
+        // }
 
         while(nextVerticalTouchX >= 0 && nextVerticalTouchX <= WINDOW_WIDTH && nextVerticalTouchY >= 0 && nextVerticalTouchY <= WINDOW_HEIGHT) {
-            if(grid.checkCollision(nextVerticalTouchX, nextVerticalTouchY)) {
+            if(grid.checkCollision(nextVerticalTouchX - (this.isRayFacingLeft ? 1 : 0), nextVerticalTouchY)) {
 
                 foundVerticalWallHit = true;
                 verticalWallHitX = nextVerticalTouchX;
@@ -391,4 +391,5 @@ function draw() {
     for(ray of rays) {
         ray.render();
     }
+
 }
