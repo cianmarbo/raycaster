@@ -12,6 +12,9 @@ const NUM_RAYS = WINDOW_WIDTH / WALL_STRIP_WIDTH;
 
 const RAYLINE_LENGTH = 30;
 
+//scale down map, player etc
+const MINIMAP_SCALE_FACTOR = 0.2;
+
 class Map {
     constructor() {
         this.grid = [
@@ -39,7 +42,11 @@ class Map {
                 stroke("#222");
                 fill(color);
 
-                rect(tilePosX, tilePosY, TILE_SIZE, TILE_SIZE);
+                rect(
+                    MINIMAP_SCALE_FACTOR * tilePosX, 
+                    MINIMAP_SCALE_FACTOR * tilePosY, 
+                    MINIMAP_SCALE_FACTOR * TILE_SIZE, 
+                    MINIMAP_SCALE_FACTOR * TILE_SIZE);
             }
         }
     }
@@ -97,7 +104,10 @@ class Player {
     render() {
         noStroke();
         fill("red");
-        circle(this.xpos, this.ypos, this.radius);
+        circle(
+            MINIMAP_SCALE_FACTOR * this.xpos, 
+            MINIMAP_SCALE_FACTOR * this.ypos, 
+            MINIMAP_SCALE_FACTOR * this.radius);
 
         // stroke("red");
         // line(
@@ -283,10 +293,10 @@ class Ray {
     render() {
         stroke("rgba(255, 0, 0, 0.8)");
         line(
-            player.xpos,
-            player.ypos,
-            this.wallHitX,
-            this.wallHitY
+            MINIMAP_SCALE_FACTOR * player.xpos,
+            MINIMAP_SCALE_FACTOR * player.ypos,
+            MINIMAP_SCALE_FACTOR * this.wallHitX,
+            MINIMAP_SCALE_FACTOR * this.wallHitY
         );
     }
 }
