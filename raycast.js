@@ -12,7 +12,7 @@ const NUM_RAYS = WINDOW_WIDTH / WALL_STRIP_WIDTH;
 
 const RAYLINE_LENGTH = 30;
 
-//scale down map, player etc
+//scale down map, player, rays etc
 const MINIMAP_SCALE_FACTOR = 0.2;
 
 class Map {
@@ -354,6 +354,26 @@ function castAllRays() {
     }
 }
 
+function render3DProjectedWalls() {
+    for(var i = 0; i < NUM_RAYS; i++) {
+        var ray = rays[i];
+
+        var rayDistance = ray.distance;
+
+        var distanceProjectionPlane = (WINDOW_WIDTH / 2) / Math.tan(FOV_ANGLE / 2);
+
+        var wallStripHeight = (TILE_SIZE / rayDistance) * distanceProjectionPlane;
+
+        fill("pink");
+        rect(
+            i * WALL_STRIP_WIDTH,
+            (WINDOW_HEIGHT / 2) - (wallStripHeight / 2),
+            WALL_STRIP_WIDTH,
+            wallStripHeight
+        );
+    }
+}
+
 //sanitize angle
 function normalizeAngle(angle) {
 
@@ -392,8 +412,10 @@ function update() {
 
 function draw() {
     // draw() is called from p5.js
-
+    clear("white");
     update();
+
+    render3DProjectedWalls();
 
     grid.render();
     player.render();
@@ -401,5 +423,4 @@ function draw() {
     for(ray of rays) {
         ray.render();
     }
-
 }
